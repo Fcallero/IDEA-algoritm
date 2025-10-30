@@ -1,0 +1,7 @@
+.cproject
+.project
+.settings/*
+.settings
+obj/*
+obj
+valgrind.log
