@@ -36,6 +36,56 @@ void cyclic_left_shift(char *bit_string, int length, int shift_count) {
     free(temp_string);
 }
 
+
+char* suma_modular_inversa(char*z1){
+	char* resultado = malloc(17);
+	uint16_t x1_num = string_to_uint(z1);
+	uint32_t x2_num = 65536; //== 2^16
+
+	uint16_t resultado_num = x2_num - x1_num;// == 2^16 - K_i mod(2^16)
+
+	int_to_binary_string(resultado_num, &resultado, 16);
+
+	return resultado;
+}
+
+//devuelve un numero x1 tal que (z1*x1) mod (2^16 + 1) == 1. Se usa el algorimo de euclides para ello
+char* mul_modular_inversa(char*z1){
+	char* resultado = malloc(17);
+	uint16_t x1_num = string_to_uint(z1);
+	uint16_t resultado_num = 0;
+
+	 int32_t t = 0, new_t = 1;
+	int32_t resto = 65537, nuevo_resto = x1_num;// r == 2^16 + 1
+	int32_t temp;
+
+	//algoritmo de euclides para allar el MCD entre z1 y 2^16 + 1
+	while (nuevo_resto != 0) { // es == a parar si resto == 1
+		int32_t q = resto / nuevo_resto;
+
+		temp = t;
+		t = new_t;
+		new_t = temp - q * new_t;
+
+		temp = resto;
+		resto = nuevo_resto;
+		nuevo_resto = temp - q * nuevo_resto;
+	}
+
+
+	// Si el inverso es negativo, lo ajustamos
+	if (t < 0)
+		t += 65537;//sumo 2^16 + 1 para que se vuelva positivo
+
+	resultado_num = (uint16_t)t;
+
+
+	int_to_binary_string(resultado_num, &resultado, 16);
+
+	return resultado;
+}
+
+
 char** generar_subclaves(char *clave){
 	char **subclaves_array = string_array_new();
 
@@ -72,8 +122,6 @@ char** generar_subclaves(char *clave){
 	string_iterate_lines(subclaves_ascii, append_array);
 
 
-	printf("clave en bits (en total %i bits): %s\n", string_size(clave_ascii), clave_ascii);
-
 	//dezplazamiento a la izquierda cíclico de 25 bits
 
 	cyclic_left_shift(clave_ascii,128,25);
@@ -106,32 +154,59 @@ char** generar_subclaves(char *clave){
 		len = string_array_size(subclaves_ascii);
 	}
 
-	printf("En total hay: %i subclaves\n", len);// debe ser 56 donde las ultimas 4 no se usan porque asi es el algoritmo
-
-	for(int i = 0; i<52; i++){
-		printf("subclave numero %i (en total %i bits): %s\n",i, string_size(subclaves_ascii[i]), subclaves_ascii[i]);
-	}
-	free(clave_ascii);
+	//free(clave_ascii);
 
 	//string_array_destroy(subclaves_array);
 	return subclaves_ascii;
 }
 
-// convierte un caracter en un string de bits (ejemplo si caracter='h' => buffer="01101000")
-void convert_ascii_to_bits(char caracter, char*buffer){
-	  buffer[8] = '\0'; // Asegura el terminador nulo al final
+char** generar_subclaves_desencriptar(char *clave){
+	char **subclaves_array = generar_subclaves(clave);//genero las 52 claves normalmente
+	char** subclaves_array_desencriptar = string_array_new();
 
-	    for (int i = 7; i >= 0; i--) {
-	        // Usa un operador bit a bit para verificar cada bit del caracter
-	        // Se desplaza 1 a la izquierda i veces para obtener una máscara con un 1 en la posición correcta
-	        // Y se usa el operador AND (&) para aislar ese bit
-	        if ((caracter >> i) & 1) {
-	            buffer[7 - i] = '1';
-	        } else {
-	            buffer[7 - i] = '0';
-	        }
-	    }
+	printf("Subclaves para la desencripción:\n");
+
+	//subclaves ronda 1
+	string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[48])); // 48 = 6* 8 es decir, k1 de la ronda 9
+
+	string_array_push(&subclaves_array_desencriptar, suma_modular_inversa(subclaves_array[49])); // 49 = 6* 8 + 1 es decir, k2 de la ronda 9
+
+	string_array_push(&subclaves_array_desencriptar, suma_modular_inversa(subclaves_array[50])); // 50 = 6* 8 + 2 es decir, k3 de la ronda 9
+
+	string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[51])); // 51 = 6* 8 + 3 es decir, k4 de la ronda 9
+
+	string_array_push(&subclaves_array_desencriptar, subclaves_array[46]); // 46 = 6* 7 + 4 es decir, k5 de la ronda 8
+
+	string_array_push(&subclaves_array_desencriptar, subclaves_array[47]); // 47 = 6* 7 + 5 es decir, k6 de la ronda 8
+
+	//subclaves de la ronda 2 a la 8
+	for(int ronda = 1; ronda < 8; ronda++){
+
+		string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[6*(10-ronda-2)]));// k1 de la ronda (10-ronda)
+
+		string_array_push(&subclaves_array_desencriptar, suma_modular_inversa(subclaves_array[6*(10-ronda-2) + 2])); // k3 de la ronda (10-ronda)
+
+		string_array_push(&subclaves_array_desencriptar, suma_modular_inversa(subclaves_array[6*(10-ronda-2) + 1])); // k2 de la ronda (10-ronda)
+
+		string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[6*(10-ronda-2) + 3]));// k4 de la ronda (10-ronda)
+
+		string_array_push(&subclaves_array_desencriptar, subclaves_array[6*(9-ronda-2) + 4]);// k5 de la ronda (9-ronda)
+
+		string_array_push(&subclaves_array_desencriptar, subclaves_array[6*(9-ronda-2) + 5]);// k6 de la ronda (9-ronda)
+	}
+	//subclaves ronda 9
+
+	string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[0]));// 0 = 6* 0  es decir, k1 de la ronda 1
+
+	string_array_push(&subclaves_array_desencriptar, suma_modular_inversa(subclaves_array[1])); // 1 = 6* 0 + 1 es decir, k2 de la ronda 1
+
+	string_array_push(&subclaves_array_desencriptar, suma_modular_inversa(subclaves_array[2])); // 2 = 6* 0 + 2 es decir, k3 de la ronda 1
+
+	string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[3]));// 3 = 6* 0+3  es decir, k4 de la ronda 1
+
+	return subclaves_array_desencriptar;
 }
+
 
 void bits_a_rellenar(uint32_t numero_relleno, int cant_disponible, int bits_tam_total, char** buffer){
 	char* bits_a_multiplicar = malloc(9);//cada numero son 8 bits
@@ -147,19 +222,19 @@ void bits_a_rellenar(uint32_t numero_relleno, int cant_disponible, int bits_tam_
 }
 
 //relleno de bits usando la estrategia PKCS5
-void agregar_relleno(char*** bloques_array){
+void agregar_relleno(char*** bloques_array, int es_cifrado){
 	int cant_bloques = string_array_size(*bloques_array);
 
 	char* ultimo_bloque = (*bloques_array)[cant_bloques-1];
 
-	if(string_size(ultimo_bloque) == 64){
+	if(string_size(ultimo_bloque) == 64 && es_cifrado){
 		char* nuevo_ultimo_bloque = malloc(65);
 		nuevo_ultimo_bloque[0]= '\0';//inicializo vacio
 
 		bits_a_rellenar((uint32_t) 64,0, 64,&nuevo_ultimo_bloque);
 
 		string_array_push(bloques_array, nuevo_ultimo_bloque);
-	} else {
+	} else if(es_cifrado) {
 
 		int bits_faltantes = 64 - string_size(ultimo_bloque);
 		int tam_ultimo_bloque = string_size(ultimo_bloque);
@@ -170,7 +245,7 @@ void agregar_relleno(char*** bloques_array){
 		bits_a_rellenar((uint32_t) bits_faltantes,tam_ultimo_bloque, 64,&ultimo_bloque);
 
 		string_array_replace(*bloques_array,cant_bloques-1, ultimo_bloque);
-	}
+	}//si se decifra, no habria que agregar relleno!!
 
 	int nueva_cant_bloques = string_array_size(*bloques_array);
 	for(int i = 0; i<nueva_cant_bloques ; i++){
@@ -179,7 +254,39 @@ void agregar_relleno(char*** bloques_array){
 
 }
 
-char** obtener_bloques(char* contenido){
+void sacar_bytes_relleno(char** descifrado_completo){
+
+	int tam_descifrado = string_size(*descifrado_completo);
+	int indice_ultimo_bloque =tam_descifrado-64;
+	char* ultimo_bloque = string_substring_from(*descifrado_completo, indice_ultimo_bloque);
+	uint8_t * nums = malloc(8*(sizeof(uint8_t)));
+	for(int i = 0; i< 8; i++){
+	  char* caracter_n = string_substring(ultimo_bloque, 8*i,8);
+	  printf("caracter_n es: %s\n", caracter_n);
+	  nums[i] = (uint8_t) string_to_uint(caracter_n);
+	}
+
+	if(nums[7] == 64){
+		char* temp = string_substring_until(*descifrado_completo, tam_descifrado-64);
+		free(*descifrado_completo);
+		*descifrado_completo=temp;
+	} else if( nums[7] <= 7) {
+		int count = 0;
+		for(int i = nums[7]; nums[i]==nums[7] ; i--){
+			count++;
+		}
+		if(count == nums[7]){
+			char* temp = string_substring_until(*descifrado_completo, tam_descifrado-(nums[7]*8));
+			free(*descifrado_completo);
+			*descifrado_completo=temp;
+		}
+	}
+	printf("Quedó el descrifrado como: %s\n", *descifrado_completo);
+	printf("ultimo bloque es: %s\n", ultimo_bloque);
+
+}
+
+char** obtener_bloques(char* contenido, int es_cifrado){
 	char** bloques_array = string_array_new();
 
 	char* contenido_bits = string_new();
@@ -214,7 +321,7 @@ char** obtener_bloques(char* contenido){
 		string_array_push(&bloques_array, bloque_n);
 	}
 	free(contenido_bits);
-	agregar_relleno(&bloques_array);
+	agregar_relleno(&bloques_array, es_cifrado);
 
 
 	return bloques_array;
@@ -335,8 +442,8 @@ char** media_ronda(char** subbloques_n, char** subclaves){
 
 int main(int argc, char** argv){
 
-    if(argc < 3){
-    	printf("Se debe indicar la clave y el nombre del texto !!\n");
+    if(argc < 5){
+    	printf("Se debe indicar la clave, el nombre del archivo txt, si se quiere encriptar (1) o desencriptar(0) y la ruta al archivo con el resultado (debe ser txt) !!\n");
         return -1;
     }
 
@@ -360,8 +467,16 @@ int main(int argc, char** argv){
     	return -1;
     }
 
-    printf("Clave: %s\n",clave);
+    char* es_encriptar = strdup(argv[3]);
+    int es_cifrado = strcmp(es_encriptar, "1") == 0 ? 1 : 0;
 
+    if(es_cifrado==1){
+    	printf("Cifro\n");
+    }else{
+    	printf("DeCifro\n");
+    }
+
+    printf("Clave: %s\n",clave);
 
    contenido = malloc( stat_file.st_size + 1);
    fread(contenido, stat_file.st_size, 1, f_contenido);
@@ -371,11 +486,26 @@ int main(int argc, char** argv){
 	   return -1;
    }
 
-	printf("Contenido a cifrar:\n %s\n", contenido);
+   char** subclaves;
+   if(es_cifrado){
+	   printf("Contenido a cifrar:\n %s\n", contenido);
 
-	char** subclaves = generar_subclaves(clave);//genero las 52 subclaves
 
-	char** bloques = obtener_bloques(contenido);//separo el contenido en bloques de 64 bits
+	   subclaves = generar_subclaves(clave);//genero las 52 subclaves
+   }else {
+	   printf("Contenido a decifrar:\n %s\n", contenido);
+	   subclaves = generar_subclaves_desencriptar(clave);//genero las 52 subclaves
+   }
+
+   int cant_subclaves = string_array_size(subclaves);
+
+   printf("En total hay: %i subclaves\n", cant_subclaves);
+
+   	for(int i = 0; i<52; i++){
+   		printf("subclave numero %i (en total %i bits): %s\n",i, string_size(subclaves[i]), subclaves[i]);
+   	}
+
+	char** bloques = obtener_bloques(contenido, es_cifrado);//separo el contenido en bloques de 64 bits
 
 
 	char* cifrado_completo = string_new();
@@ -409,7 +539,11 @@ int main(int argc, char** argv){
 		//unifico el array de subbloques cifrado a un unico string
 		int count = 0;
 		void append_and_print_cifrado(char* subbloque_n){
-			printf("cifrado subbloque nro %i: %s\n", count, subbloque_n);
+			if(es_cifrado){
+				printf("cifrado subbloque nro %i: %s\n", count, subbloque_n);
+			} else {
+				printf("descifrado subbloque nro %i: %s\n", count, subbloque_n);
+			}
 
 			string_append(&cifrado_completo, subbloque_n);
 			count++;
@@ -423,20 +557,41 @@ int main(int argc, char** argv){
 
 	string_array_destroy(bloques);
 
+	if(!es_cifrado){
+		sacar_bytes_relleno(&cifrado_completo);
+	}
+
 	char* cifrado_hex = malloc(string_size(cifrado_completo));
 	binary_to_hex_string(cifrado_completo, cifrado_hex);
 
 	free(cifrado_completo);
 
-	printf("el texto cifrado en hexa es: %s\n",cifrado_hex);
-
 	char* cifrado_ascii = hex_to_ascii(cifrado_hex);
-	printf("el texto cifrado en ascii es: %s\n",cifrado_ascii);
+
+	if(es_cifrado){
+		printf("el texto cifrado en hexa es: %s\n",cifrado_hex);
+		printf("el texto cifrado en ascii es: %s\n",cifrado_ascii);
+	}else {
+		printf("el texto descifrado en hexa es: %s\n",cifrado_hex);
+		printf("el texto descifrado en ascii es: %s\n",cifrado_ascii);
+	}
+
+	fclose(f_contenido);
+	char* path_resultado = strdup(argv[4]);
+	FILE* f_contenido_resultado = fopen(path_resultado, "w");
+
+	fwrite(cifrado_ascii,1,string_size(cifrado_ascii), f_contenido_resultado);
+
+	fclose(f_contenido_resultado);
+
+	printf("Resultado guardado en: %s\n", path_resultado);
+
 
 	free(cifrado_ascii);
 	free(path);
 	free(cifrado_hex);
 	free(contenido);
+	free(es_encriptar);
 
 	string_array_destroy(subclaves);
     return 0;

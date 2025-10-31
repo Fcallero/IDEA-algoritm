@@ -23,4 +23,6 @@ char* hex_to_ascii(char* hex_str);
 uint16_t string_to_uint(char* num);
 void int_to_binary_string(uint32_t num, char **buffer, int cant_bits);
 
+void convert_ascii_to_bits(char caracter, char*buffer);
+
 #endif /* SRC_UTILS_H_ */

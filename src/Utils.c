@@ -119,3 +119,19 @@ void int_to_binary_string(uint32_t num, char **buffer, int cant_bits) {
         num >>= 1;
     }
 }
+
+// convierte un caracter en un string de bits (ejemplo si caracter='h' => buffer="01101000")
+void convert_ascii_to_bits(char caracter, char*buffer){
+	  buffer[8] = '\0'; // Asegura el terminador nulo al final
+
+	    for (int i = 7; i >= 0; i--) {
+	        // Usa un operador bit a bit para verificar cada bit del caracter
+	        // Se desplaza 1 a la izquierda i veces para obtener una máscara con un 1 en la posición correcta
+	        // Y se usa el operador AND (&) para aislar ese bit
+	        if ((caracter >> i) & 1) {
+	            buffer[7 - i] = '1';
+	        } else {
+	            buffer[7 - i] = '0';
+	        }
+	    }
+}
