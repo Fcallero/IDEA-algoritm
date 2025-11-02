@@ -470,16 +470,18 @@ int main(int argc, char** argv){
     char* es_encriptar = strdup(argv[3]);
     int es_cifrado = strcmp(es_encriptar, "1") == 0 ? 1 : 0;
 
-    if(es_cifrado==1){
-    	printf("Cifro\n");
+    if(es_cifrado){
+    	printf("Cifrado:\n");
     }else{
-    	printf("DeCifro\n");
+    	printf("Decifrado:\n");
     }
 
     printf("Clave: %s\n",clave);
 
    contenido = malloc( stat_file.st_size + 1);
    fread(contenido, stat_file.st_size, 1, f_contenido);
+
+   contenido[stat_file.st_size] = '\0';//agrego fin de caracter
 
    if(contenido == NULL){
 	   printf("No se pudo leer el archivo !!\n");
