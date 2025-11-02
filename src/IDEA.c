@@ -138,15 +138,13 @@ char** generar_subclaves(char *clave){
 	int len = string_array_size(subclaves_ascii);
 
 	while(len < 56){
-		//printf("clave en bits (en total %i bits): %s\n", string_size(clave_ascii), clave_ascii);
+
 		cyclic_left_shift(clave_ascii,128,25);
-		//printf("clave en bits dezplazado 25 veces(en total %i bits): %s\n", string_size(clave_ascii), clave_ascii);
 
 		//partir en 8 y agregarlos al array de subclaves
 
 		for(int i = 0; i< 8; i++){
 			char * subclave_n= string_substring(clave_ascii,i*16,16);
-			//printf("subclave numero %i(en total %i bits): %s\n",i, string_size(subclave_n), subclave_n);
 
 			string_array_push(&subclaves_ascii, subclave_n);
 		}
@@ -154,9 +152,14 @@ char** generar_subclaves(char *clave){
 		len = string_array_size(subclaves_ascii);
 	}
 
-	//free(clave_ascii);
+	free(clave_ascii);
 
-	//string_array_destroy(subclaves_array);
+	//libero las subclaves de mas que no se usan
+	for(int i = 52; i< 56 ;i++){
+		free(subclaves_ascii[i]);
+	}
+	subclaves_ascii[52] = NULL;
+
 	return subclaves_ascii;
 }
 
@@ -175,9 +178,9 @@ char** generar_subclaves_desencriptar(char *clave){
 
 	string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[51])); // 51 = 6* 8 + 3 es decir, k4 de la ronda 9
 
-	string_array_push(&subclaves_array_desencriptar, subclaves_array[46]); // 46 = 6* 7 + 4 es decir, k5 de la ronda 8
+	string_array_push(&subclaves_array_desencriptar, strdup(subclaves_array[46])); // 46 = 6* 7 + 4 es decir, k5 de la ronda 8
 
-	string_array_push(&subclaves_array_desencriptar, subclaves_array[47]); // 47 = 6* 7 + 5 es decir, k6 de la ronda 8
+	string_array_push(&subclaves_array_desencriptar, strdup(subclaves_array[47])); // 47 = 6* 7 + 5 es decir, k6 de la ronda 8
 
 	//subclaves de la ronda 2 a la 8
 	for(int ronda = 1; ronda < 8; ronda++){
@@ -190,9 +193,9 @@ char** generar_subclaves_desencriptar(char *clave){
 
 		string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[6*(10-ronda-2) + 3]));// k4 de la ronda (10-ronda)
 
-		string_array_push(&subclaves_array_desencriptar, subclaves_array[6*(9-ronda-2) + 4]);// k5 de la ronda (9-ronda)
+		string_array_push(&subclaves_array_desencriptar, strdup(subclaves_array[6*(9-ronda-2) + 4]));// k5 de la ronda (9-ronda)
 
-		string_array_push(&subclaves_array_desencriptar, subclaves_array[6*(9-ronda-2) + 5]);// k6 de la ronda (9-ronda)
+		string_array_push(&subclaves_array_desencriptar, strdup(subclaves_array[6*(9-ronda-2) + 5]));// k6 de la ronda (9-ronda)
 	}
 	//subclaves ronda 9
 
@@ -203,6 +206,12 @@ char** generar_subclaves_desencriptar(char *clave){
 	string_array_push(&subclaves_array_desencriptar, suma_modular_inversa(subclaves_array[2])); // 2 = 6* 0 + 2 es decir, k3 de la ronda 1
 
 	string_array_push(&subclaves_array_desencriptar, mul_modular_inversa(subclaves_array[3]));// 3 = 6* 0+3  es decir, k4 de la ronda 1
+
+
+	printf("Subclaves antes de adaptarlo a desencriptar: %i ; y despues: %i\n",string_array_size(subclaves_array) ,string_array_size(subclaves_array_desencriptar) );
+
+	//libero array de subclaves que ya no se usan
+	string_array_destroy(subclaves_array);
 
 	return subclaves_array_desencriptar;
 }
@@ -264,6 +273,7 @@ void sacar_bytes_relleno(char** descifrado_completo){
 	  char* caracter_n = string_substring(ultimo_bloque, 8*i,8);
 	  printf("caracter_n es: %s\n", caracter_n);
 	  nums[i] = (uint8_t) string_to_uint(caracter_n);
+	  free(caracter_n);
 	}
 
 	if(nums[7] == 64){
@@ -281,8 +291,10 @@ void sacar_bytes_relleno(char** descifrado_completo){
 			*descifrado_completo=temp;
 		}
 	}
+	free(nums);
 	printf("Quedó el descrifrado como: %s\n", *descifrado_completo);
 	printf("ultimo bloque es: %s\n", ultimo_bloque);
+	free(ultimo_bloque);
 
 }
 
@@ -392,37 +404,76 @@ char*operacion_xor(char *x1, char* x2){
 	return resultado;
 }
 
+
+static char* reemplazar_copia(char** destino) {
+    char* copia = strdup(*destino);
+    free(*destino);
+    return copia;
+}
+
 void ronda(char** subbloques_n, int ronda_num, char** subclaves){
 
 	//a.
 
-	subbloques_n[0] = mul_modular(subbloques_n[0], subclaves[6*ronda_num]);
+	char* sub_bloque_0 = reemplazar_copia(&subbloques_n[0]);
+	char* sub_bloque_1 = reemplazar_copia(&subbloques_n[1]);
+	char* sub_bloque_2 = reemplazar_copia(&subbloques_n[2]);
+	char* sub_bloque_3 = reemplazar_copia(&subbloques_n[3]);
 
-	subbloques_n[3] = mul_modular(subbloques_n[3], subclaves[6*ronda_num + 3]);
 
-	subbloques_n[1] = suma_modular(subbloques_n[1], subclaves[6*ronda_num + 1]);
+	subbloques_n[0] = mul_modular(sub_bloque_0, subclaves[6*ronda_num]);
 
-	subbloques_n[2] = suma_modular(subbloques_n[2], subclaves[6*ronda_num + 2]);
+	subbloques_n[3] = mul_modular(sub_bloque_3, subclaves[6*ronda_num + 3]);
+
+	subbloques_n[1] = suma_modular(sub_bloque_1, subclaves[6*ronda_num + 1]);
+
+	subbloques_n[2] = suma_modular(sub_bloque_2, subclaves[6*ronda_num + 2]);
 
 	//b.
 
-	char* temp_0 = mul_modular( subclaves[6*ronda_num + 4] ,operacion_xor(subbloques_n[0], subbloques_n[2]));
+	char* temp_xor_0 = operacion_xor(subbloques_n[0], subbloques_n[2]);
+	char* temp_0 = mul_modular( subclaves[6*ronda_num + 4] ,temp_xor_0);
 
-	char* temp_1 = mul_modular( subclaves[6*ronda_num + 5] , suma_modular(temp_0, operacion_xor(subbloques_n[1], subbloques_n[3])));
+	char* temp_xor_1 = operacion_xor(subbloques_n[1], subbloques_n[3]);
+	char* temp_suma_1 = suma_modular(temp_0, temp_xor_1);
+
+	char* temp_1 = mul_modular( subclaves[6*ronda_num + 5] , temp_suma_1);
 
 	char* temp_2 = suma_modular(temp_0, temp_1);
 
 	//c.
+	free(sub_bloque_0);
+	sub_bloque_0 = reemplazar_copia(&subbloques_n[0]);
 
-	subbloques_n[0] = operacion_xor(subbloques_n[0], temp_1);
+	free(sub_bloque_3);
+	sub_bloque_3 = reemplazar_copia(&subbloques_n[3]);
 
-	subbloques_n[3] = operacion_xor(subbloques_n[3], temp_2);
+	free(sub_bloque_1);
+	sub_bloque_1 = reemplazar_copia(&subbloques_n[1]);
 
-	char* a = operacion_xor(subbloques_n[1], temp_2);
-	subbloques_n[1] = operacion_xor(subbloques_n[2], temp_1);
+	free(sub_bloque_2);
+	sub_bloque_2 = reemplazar_copia(&subbloques_n[2]);
+
+
+	subbloques_n[0] = operacion_xor(sub_bloque_0, temp_1);
+
+	subbloques_n[3] = operacion_xor(sub_bloque_3, temp_2);
+
+	char* a = operacion_xor(sub_bloque_1, temp_2);
+	subbloques_n[1] = operacion_xor(sub_bloque_2, temp_1);
 
 	subbloques_n[2] = a;
 
+	free(sub_bloque_0);
+	free(sub_bloque_1);
+	free(sub_bloque_2);
+	free(sub_bloque_3);
+	free(temp_xor_0);
+	free(temp_xor_1);
+	free(temp_0);
+	free(temp_1);
+	free(temp_2);
+	free(temp_suma_1);
 }
 
 char** media_ronda(char** subbloques_n, char** subclaves){
@@ -538,6 +589,7 @@ int main(int argc, char** argv){
 		char** subbloques_cifrado_n = media_ronda(subbloques_n, subclaves);
 
 		string_array_destroy(subbloques_n);
+
 		//unifico el array de subbloques cifrado a un unico string
 		int count = 0;
 		void append_and_print_cifrado(char* subbloque_n){
@@ -588,7 +640,7 @@ int main(int argc, char** argv){
 
 	printf("Resultado guardado en: %s\n", path_resultado);
 
-
+	free(path_resultado);
 	free(cifrado_ascii);
 	free(path);
 	free(cifrado_hex);
