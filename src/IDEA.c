@@ -104,6 +104,7 @@ char** generar_subclaves(char *clave){
 		char *ascii_str = string_new();
 		hex_to_binary(subclave_en_hexa, &ascii_str);
 		string_array_push(&subclaves_ascii, ascii_str);
+
 	}
 	string_iterate_lines(subclaves_array, convertir_a_ascii);
 
@@ -166,6 +167,23 @@ char** generar_subclaves(char *clave){
 char** generar_subclaves_desencriptar(char *clave){
 	char **subclaves_array = generar_subclaves(clave);//genero las 52 claves normalmente
 	char** subclaves_array_desencriptar = string_array_new();
+
+	//verifico si es válida
+	int clave_invalida = 0;
+
+   void buscar_null(char* subclave_n){
+	   if(string_contains(subclave_n, "NULL")){
+		   clave_invalida = 1;
+	   }
+   }
+
+   string_iterate_lines(subclaves_array, buscar_null);
+
+   if(clave_invalida){
+	   string_array_push(&subclaves_array_desencriptar, "NULL");
+	   return subclaves_array_desencriptar;
+   }
+
 
 	printf("Subclaves para la desencripción:\n");
 
@@ -550,6 +568,21 @@ int main(int argc, char** argv){
    }else {
 	   printf("Contenido a decifrar:\n %s\n", contenido);
 	   subclaves = generar_subclaves_desencriptar(clave);//genero las 52 subclaves
+   }
+
+   int clave_invalida = 0;
+
+   void buscar_null(char* subclave_n){
+	   if(string_contains(subclave_n, "NULL")){
+		   clave_invalida = 1;
+	   }
+   }
+
+   string_iterate_lines(subclaves, buscar_null);
+
+   if(clave_invalida){
+	   printf("La clave ingresada no es válida debe ser un total de 32 caracteres en hexa\n");
+	   return -1;
    }
 
    int cant_subclaves = string_array_size(subclaves);
