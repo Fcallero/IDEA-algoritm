@@ -265,13 +265,16 @@ void agregar_relleno(char*** bloques_array, int es_cifrado){
 
 void sacar_bytes_relleno(char** descifrado_completo){
 
+	printf("Elimino bytes de relleno...\n");
+
 	int tam_descifrado = string_size(*descifrado_completo);
 	int indice_ultimo_bloque =tam_descifrado-64;
 	char* ultimo_bloque = string_substring_from(*descifrado_completo, indice_ultimo_bloque);
 	uint8_t * nums = malloc(8*(sizeof(uint8_t)));
+
+	//tomo de a 8 bits y lo paso a numero cada uno
 	for(int i = 0; i< 8; i++){
 	  char* caracter_n = string_substring(ultimo_bloque, 8*i,8);
-	  printf("caracter_n es: %s\n", caracter_n);
 	  nums[i] = (uint8_t) string_to_uint(caracter_n);
 	  free(caracter_n);
 	}
@@ -280,20 +283,19 @@ void sacar_bytes_relleno(char** descifrado_completo){
 		char* temp = string_substring_until(*descifrado_completo, tam_descifrado-64);
 		free(*descifrado_completo);
 		*descifrado_completo=temp;
-	} else if( nums[7] <= 7) {
+	} else if( nums[7] <= 7) {//Nunca puede ser 8 sino es una coincidencia ya que un bloque tiene 8 bytes en total
 		int count = 0;
-		for(int i = nums[7]; nums[i]==nums[7] ; i--){
+		for(int i = nums[7]; nums[i]==nums[7] ; i--){//calculo la cantidad de veces que se repite el mismo numero en el bloque
 			count++;
 		}
-		if(count == nums[7]){
+		if(count == nums[7]){//sino solo es una coincidencia
 			char* temp = string_substring_until(*descifrado_completo, tam_descifrado-(nums[7]*8));
 			free(*descifrado_completo);
 			*descifrado_completo=temp;
 		}
 	}
 	free(nums);
-	printf("Quedó el descrifrado como: %s\n", *descifrado_completo);
-	printf("ultimo bloque es: %s\n", ultimo_bloque);
+	printf("Quedó el contenido descrifrado como: %s\n", *descifrado_completo);
 	free(ultimo_bloque);
 
 }
@@ -304,7 +306,7 @@ char** obtener_bloques(char* contenido, int es_cifrado){
 	char* contenido_bits = string_new();
 	int len = string_size(contenido);
 
-	printf("tam contenido: %i\n", len);
+	printf("Cantidad de caracteres: %i\n", len);
 
 	//paso el contenido ascii a bits
 
@@ -576,7 +578,7 @@ int main(int argc, char** argv){
 
 
 		for(int k = 0; k<4; k++){
-			printf("subbloque %i: %s\n", k, subbloques_n[k]);
+			printf("\tsubbloque %i: %s\n", k, subbloques_n[k]);
 		}
 
 		//aplico las 8 rondas
@@ -594,9 +596,9 @@ int main(int argc, char** argv){
 		int count = 0;
 		void append_and_print_cifrado(char* subbloque_n){
 			if(es_cifrado){
-				printf("cifrado subbloque nro %i: %s\n", count, subbloque_n);
+				printf("\tcifrado subbloque nro %i: %s\n", count, subbloque_n);
 			} else {
-				printf("descifrado subbloque nro %i: %s\n", count, subbloque_n);
+				printf("\tdescifrado subbloque nro %i: %s\n", count, subbloque_n);
 			}
 
 			string_append(&cifrado_completo, subbloque_n);
