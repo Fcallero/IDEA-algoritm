@@ -5,11 +5,11 @@ IDEA es un bloc cipher que emplea una clave de 128 bits y bloques de 64 bits. Ut
 ## Ejemplo de uso
 Desencriptar:
 ```bash
-./IDEA.out resultado.txt 1234ACB980154D89F1B123F011208965 0 resultado2.txt
+./IDEA.out resultado_cifrado.txt 1234ACB980154D89F1B123F011208965 0 resultado_descifrado.txt
 ```
 Encriptar:
 ```bash
-./IDEA.out contenido.txt 1234ACB980154D89F1B123F011208965 1 resultado.txt
+./IDEA.out contenido.txt 1234ACB980154D89F1B123F011208965 1 resultado_cifrado.txt
 ```
 En general:
 ```bash

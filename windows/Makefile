@@ -77,7 +77,7 @@ clean:
 	-rm -f ../obj/*.o 
 	-rm -f ../bin/*.exe
 	-rmdir ../obj
-	-rmdir bin 
+	-rmdir ../bin 
 
 .PHONY: watch
 watch:
