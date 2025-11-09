@@ -77,7 +77,6 @@ clean:
 	-rm -f ../obj/*.o 
 	-rm -f ../bin/*.exe
 	-rmdir ../obj
-	-rmdir ../bin 
 
 .PHONY: watch
 watch:
@@ -109,8 +108,6 @@ $(sort $(dir $(BIN) $(OBJS))):
 ################################################################################
 
 .PHONY: start
-start: debug
-	valgrind --tool=none ./$(BIN) $(ARGS)
 
 .PHONY: daemon
 daemon:
@@ -118,14 +115,6 @@ daemon:
 	while sleep 0.1; do \
 		find ../src/ | entr -d make start --no-print-directory; \
 	done
-
-.PHONY: memcheck
-memcheck: debug
-	valgrind --leak-check=full $(MEMCHECK_FLAGS) ./$(BIN) $(ARGS)
-
-.PHONY: helgrind
-helgrind: debug
-	valgrind --tool=helgrind $(HELGRIND_FLAGS) ./$(BIN) $(ARGS)
 
 
 ################################################################################
@@ -141,13 +130,5 @@ test-daemon:
 	while sleep 0.1; do \
 		find ../tests/ ../src/ | entr -d make test --no-print-directory; \
 	done
-
-.PHONY: test-memcheck
-test-memcheck: $(TEST)
-	valgrind --leak-check=full $(MEMCHECK_FLAGS) ./$(TEST)
-
-.PHONY: test-helgrind
-test-helgrind: $(TEST)
-	valgrind --tool=helgrind $(HELGRIND_FLAGS) ./$(TEST)
 endif
 

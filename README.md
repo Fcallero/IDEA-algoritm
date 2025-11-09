@@ -16,3 +16,6 @@ En general:
 ./IDEA.out <ruta-archivo-origen> <clave-128-bits-en-hexa> <1/0> <ruta-archivo-destino>
 ```
 Donde 1 equivale a encriptar y 0 a desencriptar.
+
+## Windows
+Si se quiere ejecutar en windows se debe usar el makefile que se encuentra bajo la carpeta llamada "windows".
