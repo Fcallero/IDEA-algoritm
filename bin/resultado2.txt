@@ -1,0 +1,9 @@
+Una empresa dedicada a la fabricación de tablets desea estudiar el rendimiento de su último modelo en el
+showroom exclusivo para mayoristas, abierto de 10 a 20 hs todos los días de la semana. Para ello necesita
+determinar la cantidad de tablets a reponer en el showroom cada D días, para minimizar la cantidad de
+pedidos adicionales y el porcentaje de pedidos cancelados por no contar con suficiente stock.
+Si se vendiera todo el stock antes de llegar la reposición, se solicita una entrega adicional, de una cantidad fija
+a determinar que tarda en llegar un período determinado por una fdp conocida (expresada en horas). La
+política de la empresa es ho entregar pedidos incompletos al cliente, entonces, si en el momento no se cuenta
+con stock suficiente, se cancela todo el pedido. Las ventas se producen a intervalos determinados por una fdp
+(expresada en horas), la cantidad de tablets que compra un cliente está dada por una fdp conocida.

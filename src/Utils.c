@@ -76,7 +76,7 @@ void hex_to_binary(char *hex_str, char **ascii_str) {
     }
 }
 
-char* hex_to_ascii(char* hex_str) {
+char* hex_to_ascii(char* hex_str, int* out_len) {
     if (hex_str == NULL) return NULL;
 
     int len = string_size(hex_str);
@@ -86,17 +86,17 @@ char* hex_to_ascii(char* hex_str) {
     }
 
     // Cantidad de bytes que representará (cada 2 caracteres hex = 1 byte)
-    int out_len = len / 2;
+    *out_len = len / 2;
 
     // Reservamos espacio (+1 para el terminador '\0')
-    char* ascii_str = malloc(out_len + 1);
+    char* ascii_str = malloc(*out_len + 1);
 
-    for (int i = 0; i < out_len; i++) {
+    for (int i = 0; i < *out_len; i++) {
         char byte_hex[3] = { hex_str[2 * i], hex_str[2 * i + 1], '\0' };
         ascii_str[i] = (char) strtol(byte_hex, NULL, 16);
     }
 
-    ascii_str[out_len] = '\0';
+    ascii_str[*out_len] = '\0';
     return ascii_str;
 }
 

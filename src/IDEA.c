@@ -318,18 +318,17 @@ void sacar_bytes_relleno(char** descifrado_completo){
 
 }
 
-char** obtener_bloques(char* contenido, int es_cifrado){
+char** obtener_bloques(char* contenido, int es_cifrado, int len_contenido){
 	char** bloques_array = string_array_new();
 
 	char* contenido_bits = string_new();
-	int len = string_size(contenido);
 
-	printf("Cantidad de caracteres: %i\n", len);
+	printf("Cantidad de caracteres: %i\n", len_contenido);
 
 	//paso el contenido ascii a bits
 
 
-	for(int i = 0; i<len ; i++){
+	for(int i = 0; i<len_contenido ; i++){
 		char* bits_caracter_n = malloc(9);
 		convert_ascii_to_bits(contenido[i], bits_caracter_n);
 		printf("caracter %i: %s\n",i, bits_caracter_n);
@@ -594,7 +593,7 @@ int main(int argc, char** argv){
    		printf("subclave numero %i (en total %i bits): %s\n",i, string_size(subclaves[i]), subclaves[i]);
    	}
 
-	char** bloques = obtener_bloques(contenido, es_cifrado);//separo el contenido en bloques de 64 bits
+	char** bloques = obtener_bloques(contenido, es_cifrado, stat_file.st_size);//separo el contenido en bloques de 64 bits
 
 
 	char* cifrado_completo = string_new();
@@ -656,7 +655,8 @@ int main(int argc, char** argv){
 
 	free(cifrado_completo);
 
-	char* cifrado_ascii = hex_to_ascii(cifrado_hex);
+	int len_cifrado_ascii ;
+	char* cifrado_ascii = hex_to_ascii(cifrado_hex, &len_cifrado_ascii);
 
 	if(es_cifrado){
 		printf("el texto cifrado en hexa es: %s\n",cifrado_hex);
@@ -668,9 +668,9 @@ int main(int argc, char** argv){
 
 	fclose(f_contenido);
 	char* path_resultado = strdup(argv[4]);
-	FILE* f_contenido_resultado = fopen(path_resultado, "w");
+	FILE* f_contenido_resultado = fopen(path_resultado, "wb");
 
-	fwrite(cifrado_ascii,1,string_size(cifrado_ascii), f_contenido_resultado);
+	fwrite(cifrado_ascii,1,len_cifrado_ascii, f_contenido_resultado);
 
 	fclose(f_contenido_resultado);
 

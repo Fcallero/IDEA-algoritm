@@ -18,7 +18,7 @@ int32_t string_size(char *string );
 
 void binary_to_hex_string(char* bin_string, char* hex_string) ;
 void hex_to_binary(char *hex_str, char **ascii_str) ;
-char* hex_to_ascii(char* hex_str);
+char* hex_to_ascii(char* hex_str, int* out_len);
 
 uint16_t string_to_uint(char* num);
 void int_to_binary_string(uint32_t num, char **buffer, int cant_bits);
