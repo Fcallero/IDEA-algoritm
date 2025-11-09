@@ -19,3 +19,4 @@ Donde 1 equivale a encriptar y 0 a desencriptar.
 
 ## Windows
 Si se quiere ejecutar en windows se debe usar el makefile que se encuentra bajo la carpeta llamada "windows".
+Se requiere de instalar MSYS y mingw para usar gcc y make.
