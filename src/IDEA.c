@@ -297,13 +297,13 @@ void sacar_bytes_relleno(char** descifrado_completo){
 	  free(caracter_n);
 	}
 
-	if(nums[7] == 64){
+	if(nums[7] == 8){
 		char* temp = string_substring_until(*descifrado_completo, tam_descifrado-64);
 		free(*descifrado_completo);
 		*descifrado_completo=temp;
 	} else if( nums[7] <= 7) {//Nunca puede ser 8 sino es una coincidencia ya que un bloque tiene 8 bytes en total
 		int count = 0;
-		for(int i = nums[7]; nums[i]==nums[7] ; i--){//calculo la cantidad de veces que se repite el mismo numero en el bloque
+		for(int i = 7; nums[i]==nums[7] ; i--){//calculo la cantidad de veces que se repite el mismo numero en el bloque
 			count++;
 		}
 		if(count == nums[7]){//sino solo es una coincidencia
@@ -519,7 +519,8 @@ int main(int argc, char** argv){
     }
 
     char* path = strdup(argv[1]);
-    FILE* f_contenido = fopen(path, "r");
+    FILE* f_contenido = fopen(path, "rb");  // abro el archivo en modo binario para evitar problemas
+    										// con caracteres especiales
 
     struct stat stat_file;
 	stat(path, &stat_file);//obtengo info del archivo
